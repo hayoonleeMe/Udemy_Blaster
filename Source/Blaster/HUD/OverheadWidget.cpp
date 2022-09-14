@@ -14,9 +14,10 @@ void UOverheadWidget::SetDisplayText(FString TextToDisplay)
 
 void UOverheadWidget::ShowPlayerNetRole(APawn* InPawn)
 {
-	ENetRole RemoteRole = InPawn->GetRemoteRole();
+	//ENetRole RemoteRole = InPawn->GetRemoteRole();
+	ENetRole LocalRole = InPawn->GetLocalRole();
 	FString Role;
-	switch (RemoteRole)
+	switch (LocalRole)
 	{
 	case ENetRole::ROLE_Authority:
 		Role = FString(TEXT("Authority"));
@@ -35,8 +36,9 @@ void UOverheadWidget::ShowPlayerNetRole(APawn* InPawn)
 		break;
 	}
 
-	FString RemoteRoleString = FString::Printf(TEXT("Remote Role : %s"), *Role);
-	SetDisplayText(RemoteRoleString);
+	//FString RemoteRoleString = FString::Printf(TEXT("Remote Role : %s"), *Role);
+	FString LocalRoleString = FString::Printf(TEXT("Local Role : %s"), *Role);
+	SetDisplayText(LocalRoleString);
 }
 
 // 레벨을 이동하여 기존의 레벨이 제거되었을 때 호출되는 메소드
