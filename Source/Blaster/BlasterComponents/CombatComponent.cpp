@@ -9,10 +9,12 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
 
 UCombatComponent::UCombatComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 
 	BaseWalkSpeed = 600.f;
 	AimWalkSpeed = 400.f;
@@ -65,6 +67,53 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 	}
 }
 
+void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
+{
+	// Viewport 사이즈 얻기
+	FVector2D ViewportSize;
+	if (GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(ViewportSize);
+	}
+
+	// Viewport 정중앙에 있는 크로스헤어 위치 계산 (Viewport space = Screen space)
+	FVector2D CrosshairLocation(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
+
+	// CrosshairLocation을 World space로 변환
+	FVector CrosshairWorldPosition;
+	FVector CrosshairWorldDirection;
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(	// 성공 여부를 반환
+		UGameplayStatics::GetPlayerController(this, 0),
+		CrosshairLocation,
+		CrosshairWorldPosition,
+		CrosshairWorldDirection
+	);
+
+	if (bScreenToWorld)
+	{
+		FVector Start = CrosshairWorldPosition;
+
+		FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
+
+		GetWorld()->LineTraceSingleByChannel(
+			TraceHitResult,
+			Start,
+			End,
+			ECollisionChannel::ECC_Visibility
+		);
+
+		// Hit Target이 없다면 마지막 ImpactPoint를 End로 지정
+		if (!TraceHitResult.bBlockingHit)
+		{
+			TraceHitResult.ImpactPoint = End;
+		}
+		else
+		{
+			DrawDebugSphere(GetWorld(), TraceHitResult.ImpactPoint, 12.f, 12, FColor::Red);
+		}
+	}
+}
+
 void UCombatComponent::ServerFire_Implementation()
 {
 	MulticastFire();
@@ -85,6 +134,8 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	FHitResult HitResult;
+	TraceUnderCrosshairs(HitResult);
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
