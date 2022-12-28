@@ -30,10 +30,18 @@ void ACasing::BeginPlay()
 void ACasing::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (ShellSound)
+	if (ShellSound && !bHitGround)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, ShellSound, GetActorLocation());
+		bHitGround = true;
 	}
-	
+
+	// DestroyTime이 지나면 Destroy()하는 메소드를 호출하는 타이머 설정
+	FTimerHandle TimerHandle;
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &ACasing::DestroySelf, DestroyTime, false);
+}
+
+void ACasing::DestroySelf()
+{
 	Destroy();
 }

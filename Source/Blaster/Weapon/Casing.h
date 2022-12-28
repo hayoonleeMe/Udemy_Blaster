@@ -28,5 +28,11 @@ private:
 	float ShellEjectionImpulse;
 
 	UPROPERTY(EditAnywhere)
-	class USoundCue* ShellSound; 
+	class USoundCue* ShellSound;
+
+	bool bHitGround = false;
+	
+	const float DestroyTime = 2.0f;
+	
+	void DestroySelf();
 };
