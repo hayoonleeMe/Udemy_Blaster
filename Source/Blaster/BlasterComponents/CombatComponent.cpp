@@ -41,7 +41,7 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 {
-	if (Character == nullptr || Character->Controller) return;
+	if (Character == nullptr || Character->Controller == nullptr) return;
 
 	// 매 프레임마다 Cast를 수행하는 것을 방지할 수 있는 코드이다.
 	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
