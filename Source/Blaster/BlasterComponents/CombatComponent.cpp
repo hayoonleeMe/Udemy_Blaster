@@ -37,7 +37,7 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	SetHUDCrosshairs(DeltaTime);
-
+	
 	if (Character && Character->IsLocallyControlled())
 	{
 		FHitResult HitResult;
@@ -87,11 +87,11 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 
 			if (Character->GetCharacterMovement()->IsFalling())
 			{
-				CrosshairVelocityFactor = FMath::FInterpTo(CrosshairVelocityFactor, 2.25f, DeltaTime, 2.25f);
+				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 2.25f, DeltaTime, 2.25f);
 			}
 			else
 			{
-				CrosshairVelocityFactor = FMath::FInterpTo(CrosshairVelocityFactor, 0.f, DeltaTime, 30.f);
+				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
 			}
 				
 			HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor;
