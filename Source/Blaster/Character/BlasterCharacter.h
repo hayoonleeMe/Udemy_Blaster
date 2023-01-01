@@ -21,6 +21,9 @@ public:
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bAiming);
 
+	UFUNCTION(NetMulticast, Unreliable)	// HitReact 애니메이션 재생은 자주 일어나고 크게 중요하지 않으므로 Unreliable로 수행
+	void MulticastHit();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -36,6 +39,7 @@ protected:
 	virtual void Jump() override;
 	void FireButtonPressed();
 	void FireButtonReleased();
+	void PlayHitReactMontage();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -69,6 +73,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* FireWeaponMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* HitReactMontage;
 
 	void HideCameraIfCharacterClose();
 
