@@ -22,8 +22,8 @@ public:
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bAiming);
 
-	UFUNCTION(NetMulticast, Unreliable)	// HitReact 애니메이션 재생은 자주 일어나고 크게 중요하지 않으므로 Unreliable로 수행
-	void MulticastHit();
+	// UFUNCTION(NetMulticast, Unreliable)	// HitReact 애니메이션 재생은 자주 일어나고 크게 중요하지 않으므로 Unreliable로 수행
+	// void MulticastHit();
 
 	virtual void OnRep_ReplicatedMovement() override;
 
@@ -45,6 +45,10 @@ protected:
 	void FireButtonPressed();
 	void FireButtonReleased();
 	void PlayHitReactMontage();
+
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+	void UpdateHUDHealth();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
