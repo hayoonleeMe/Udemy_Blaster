@@ -112,8 +112,14 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 
 			// 총을 발사했을 때 증가한 CrosshairShootingFactor를 0으로 빠르게 보간한다.
 			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, 30.f);
-			
-			HUDPackage.CrosshairSpread = 0.5f + CrosshairVelocityFactor + CrosshairInAirFactor - CrosshairAimFactor + CrosshairShootingFactor;
+
+			// 다른 플레이어를 조준했을 때 증가한 CrosshairAimPlayerFactor를 0으로 빠르게 보간한다.
+			if (!bIsAimingPlayer)
+			{
+				CrosshairAimPlayerFactor = FMath::FInterpTo(CrosshairAimPlayerFactor, 0.f, DeltaTime, 30.f);
+			}
+
+			HUDPackage.CrosshairSpread = 0.8f + CrosshairVelocityFactor + CrosshairInAirFactor - CrosshairAimFactor + CrosshairShootingFactor - CrosshairAimPlayerFactor;
 			
 			HUD->SetHUDPackage(HUDPackage);
 		}
@@ -229,10 +235,13 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>())
 		{
 			HUDPackage.CrosshairsColor = FLinearColor::Red;
+			CrosshairAimPlayerFactor = 0.5f;
+			bIsAimingPlayer = true;
 		}
 		else
 		{
 			HUDPackage.CrosshairsColor = FLinearColor::White;
+			bIsAimingPlayer = false;
 		}
 	}
 }

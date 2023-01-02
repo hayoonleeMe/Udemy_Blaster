@@ -70,6 +70,8 @@ private:
 	float CrosshairInAirFactor;
 	float CrosshairAimFactor;
 	float CrosshairShootingFactor;
+	float CrosshairAimPlayerFactor;
+	bool bIsAimingPlayer;
 
 	FVector HitTarget;
 
