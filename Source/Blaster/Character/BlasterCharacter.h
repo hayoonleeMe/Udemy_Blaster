@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Blaster/BlasterTypes/TurningInPlace.h"
 #include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "BlasterCharacter.generated.h"
 
 UCLASS()
@@ -106,6 +107,8 @@ private:
 
 	UFUNCTION()
 	void OnRep_Health();
+
+	ABlasterPlayerController* BlasterPlayerController;
 	
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
