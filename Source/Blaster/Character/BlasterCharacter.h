@@ -21,11 +21,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
 	void PlayFireMontage(bool bAiming);
-
-	// UFUNCTION(NetMulticast, Unreliable)	// HitReact 애니메이션 재생은 자주 일어나고 크게 중요하지 않으므로 Unreliable로 수행
-	// void MulticastHit();
-
 	virtual void OnRep_ReplicatedMovement() override;
+	void Elim();
 
 protected:
 	virtual void BeginPlay() override;
