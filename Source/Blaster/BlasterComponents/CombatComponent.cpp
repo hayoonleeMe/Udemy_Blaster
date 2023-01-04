@@ -141,6 +141,17 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::OnRep_EquippedWeapon()
 {
+	// EquipWeapon() 은 서버에서만 실행되고, EquippedWeapon 은 클라로 Replicated 되고, HandSocket 에 EquippedWeapon 을 붙이는 행위 자체도 클라이언트로 Replicated 된다.
+	// 서버에서는 일련의 과정이 순서대로 수행되지만, Replicated 되어 내려져오는 클라이언트에서는 EquippedWeapon 이 Replicated 되는 것과 Attach 행위 사이의 순서가 일정하다는 보장이 없다.
+	// 또한 EquippedWeapon 에 Physics 가 설정되어 있다면 Attach 가 안되기 때문에 SetWeaponState(EWeaponState::EWS_Equipped) 를 Attach 전에 먼저 호출하여 Physics 와 Collision 을 사용하지 않도록 확실히 할 필요가 있다.
+	// 따라서 순서가 보장되지 않는 Replicated 되는 것을 기다리지 않고 EquippedWeapon 이 서버에서 변경되어 클라에서 호출되는 OnRep_EquippedWeapon() 메소드에서 아래 6줄짜리 코드처럼 서버에서 수행했던 동일한 작업을 수행한다. 
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName(TEXT("RightHandSocket")));
+	if (HandSocket)
+	{
+		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+	}
+	
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
 }

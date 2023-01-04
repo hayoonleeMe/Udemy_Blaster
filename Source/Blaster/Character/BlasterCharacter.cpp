@@ -70,6 +70,11 @@ void ABlasterCharacter::OnRep_ReplicatedMovement()
 
 void ABlasterCharacter::Elim()
 {
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Dropped();
+	}
+	
 	MulticastElim();
 	GetWorldTimerManager().SetTimer(ElimTimer, this, &ABlasterCharacter::ElimTimerFinished, ElimDelay);
 }
@@ -79,6 +84,7 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	bElimmed = true;
 	PlayElimMontage();
 
+	// Start Dissolve Effect
 	if (DissolveMaterialInstance)
 	{
 		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
@@ -87,6 +93,18 @@ void ABlasterCharacter::MulticastElim_Implementation()
 		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 200.f);
 	}
 	StartDissolve();
+
+	// Disable Character Movement
+	GetCharacterMovement()->DisableMovement();			// 캐릭터가 이동하는 것을 제한
+	GetCharacterMovement()->StopMovementImmediately();	// 캐릭터 회전 또한 제한
+	if (BlasterPlayerController)
+	{
+		DisableInput(BlasterPlayerController);			// Input 제한
+	}
+
+	// Disable Collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);	
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ABlasterCharacter::ElimTimerFinished()
