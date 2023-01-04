@@ -27,6 +27,7 @@ public:
 	void Elim();
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastElim();
+	virtual void Destroyed() override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -151,6 +152,19 @@ private:
 	// 캐릭터 블루프린트에 할당할 머터리얼 인스턴스, DynamicDissolveMaterialInstance 와 함께 사용
 	UPROPERTY(EditAnywhere, Category = Elim)
 	UMaterialInstance* DissolveMaterialInstance;
+
+	/*
+	 * Elim Bot
+	 */
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ElimBotEffect;
+
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* ElimBotComponent;
+
+	UPROPERTY(EditAnywhere)
+	class USoundCue* ElimBotSound;
 	
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
