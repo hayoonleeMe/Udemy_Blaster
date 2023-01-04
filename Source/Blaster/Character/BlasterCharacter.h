@@ -7,6 +7,7 @@
 #include "Blaster/BlasterTypes/TurningInPlace.h"
 #include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Components/TimelineComponent.h"
 #include "BlasterCharacter.generated.h"
 
 UCLASS()
@@ -126,6 +127,30 @@ private:
 	float ElimDelay = 3.f;
 
 	void ElimTimerFinished();
+
+	/*
+	 * Dissolve Effect
+	 */
+	 
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* DissolveTimeline;
+	
+	FOnTimelineFloat DissolveTrack;	// One Param Delegate
+
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* DissolveCurve;
+
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
+	void StartDissolve();
+
+	// 런타임에서 동적으로 변경하는 머터리얼 인스턴스
+	UPROPERTY(VisibleAnywhere, Category = Elim)
+	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
+
+	// 캐릭터 블루프린트에 할당할 머터리얼 인스턴스, DynamicDissolveMaterialInstance 와 함께 사용
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* DissolveMaterialInstance;
 	
 public:	
 	void SetOverlappingWeapon(AWeapon* Weapon);
