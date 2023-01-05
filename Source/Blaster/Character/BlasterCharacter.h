@@ -120,6 +120,7 @@ private:
 	UFUNCTION()
 	void OnRep_Health();
 
+	UPROPERTY()
 	ABlasterPlayerController* BlasterPlayerController;
 
 	bool bElimmed = false;
@@ -169,6 +170,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ElimBotSound;
 
+	UPROPERTY()
 	class ABlasterPlayerState* BlasterPlayerState;
 	
 public:	
