@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
+#include "Components/SlateWrapperTypes.h"
 
 void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* ElimmedCharacter, ABlasterPlayerController* VictimController,
                                         ABlasterPlayerController* AttackerController)
@@ -22,6 +23,11 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* ElimmedCharacter, ABl
 	if (VictimPlayerState)
 	{
 		VictimPlayerState->AddToDefeats(1);
+	}
+
+	if (VictimController)
+	{
+		VictimController->UpdateElimmedText(ESlateVisibility::Visible);
 	}
 	
 	if (ElimmedCharacter)

@@ -7,6 +7,15 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/PlayerState/BlasterPlayerState.h"
+#include "Net/UnrealNetwork.h"
+
+void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABlasterPlayerController, ElimmedTextVisibility);
+}
 
 void ABlasterPlayerController::BeginPlay()
 {
@@ -24,6 +33,9 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	{
 		SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
 	}
+
+	// ElimmedText 를 숨긴다.
+	UpdateElimmedText(ESlateVisibility::Collapsed);
 }
 
 void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
@@ -61,5 +73,28 @@ void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
 	{
 		FString DefeatsText = FString::Printf(TEXT("%d"), Defeats);
 		BlasterHUD->CharacterOverlay->DefeatsAmount->SetText(FText::FromString(DefeatsText));
+	}
+}
+
+void ABlasterPlayerController::UpdateElimmedText(ESlateVisibility VisibilityChange)
+{
+	ElimmedTextVisibility = VisibilityChange;
+
+	SetHUDElimmedTextVisibility();
+}
+
+void ABlasterPlayerController::OnRep_ElimmedTextVisibility()
+{
+	SetHUDElimmedTextVisibility();
+}
+
+void ABlasterPlayerController::SetHUDElimmedTextVisibility()
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	bool bHUDValid = BlasterHUD && BlasterHUD->CharacterOverlay && BlasterHUD->CharacterOverlay->ElimmedText;
+	if (bHUDValid)
+	{
+		BlasterHUD->CharacterOverlay->ElimmedText->SetVisibility(ElimmedTextVisibility);
 	}
 }

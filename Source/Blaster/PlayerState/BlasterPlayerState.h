@@ -21,6 +21,7 @@ public:
 	 * Replication Notifies
 	 */
 	virtual void OnRep_Score() override;
+	
 	UFUNCTION()
 	virtual void OnRep_Defeats();
 	

@@ -148,6 +148,12 @@ void ABlasterCharacter::BeginPlay()
 
 	UpdateHUDHealth();
 
+	// ElimmedText 를 숨긴다.
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->UpdateElimmedText(ESlateVisibility::Collapsed);
+	}
+	
 	if (HasAuthority())
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
