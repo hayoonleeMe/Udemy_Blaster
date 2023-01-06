@@ -642,3 +642,17 @@ FVector ABlasterCharacter::GetHitTarget() const
 	if (Combat == nullptr) return FVector();
 	return Combat->HitTarget;
 }
+
+ECombatState ABlasterCharacter::GetCombatState() const
+{
+	if (Combat == nullptr) return ECombatState::ECS_MAX;
+	return Combat->CombatState;
+}
+
+void ABlasterCharacter::ReloadFinished()
+{
+	if (Combat)
+	{
+		Combat->FinishReloading();
+	}
+}
