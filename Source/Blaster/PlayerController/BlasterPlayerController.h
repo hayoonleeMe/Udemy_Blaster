@@ -21,12 +21,10 @@ public:
 	void SetHUDHealth(float Health, float MaxHealth);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
+	void SetHUDWeaponAmmo(int32 Ammo);
 	virtual void OnPossess(APawn* InPawn) override;
 
 	void UpdateElimmedText(ESlateVisibility VisibilityChange);
-	
-	UFUNCTION()
-	virtual void OnRep_ElimmedTextVisibility();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -38,5 +36,7 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_ElimmedTextVisibility)
 	ESlateVisibility ElimmedTextVisibility;
 
+	UFUNCTION()
+	virtual void OnRep_ElimmedTextVisibility();
 	void SetHUDElimmedTextVisibility();
 };
