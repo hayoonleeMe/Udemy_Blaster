@@ -165,6 +165,21 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	Character->bUseControllerRotationYaw = true;
 }
 
+void UCombatComponent::Reload()
+{
+	if (CarriedAmmo > 0)
+	{
+		ServerReload();
+	}
+}
+
+void UCombatComponent::ServerReload_Implementation()
+{
+	if (Character == nullptr) return;
+
+	Character->PlayReloadMontage();
+}
+
 void UCombatComponent::OnRep_EquippedWeapon()
 {
 	// EquipWeapon() 은 서버에서만 실행되고, EquippedWeapon 은 클라로 Replicated 되고, HandSocket 에 EquippedWeapon 을 붙이는 행위 자체도 클라이언트로 Replicated 된다.
