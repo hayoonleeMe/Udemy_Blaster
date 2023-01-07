@@ -36,6 +36,8 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 
 	// ElimmedText 를 숨긴다.
 	UpdateElimmedText(ESlateVisibility::Collapsed);
+	// WeaponTypeText 를 숨긴다.
+	UpdateHUDWeaponType(ESlateVisibility::Collapsed);
 }
 
 void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
@@ -97,6 +99,21 @@ void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 	{
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		BlasterHUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+}
+
+void ABlasterPlayerController::UpdateHUDWeaponType(ESlateVisibility Visibility, const FString& WeaponTypeString)
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	bool bHUDValid = BlasterHUD && BlasterHUD->CharacterOverlay && BlasterHUD->CharacterOverlay->WeaponTypeText;
+	if (bHUDValid)
+	{
+		BlasterHUD->CharacterOverlay->WeaponTypeText->SetVisibility(Visibility);
+		if (WeaponTypeString != FString())
+		{
+			BlasterHUD->CharacterOverlay->WeaponTypeText->SetText(FText::FromString(WeaponTypeString));
+		}
 	}
 }
 

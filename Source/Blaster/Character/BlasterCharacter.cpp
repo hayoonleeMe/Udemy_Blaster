@@ -155,9 +155,11 @@ void ABlasterCharacter::BeginPlay()
 	UpdateHUDHealth();
 
 	// ElimmedText 를 숨긴다.
+	// WeaponTypeText 를 숨긴다.
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->UpdateElimmedText(ESlateVisibility::Collapsed);
+		BlasterPlayerController->UpdateHUDWeaponType(ESlateVisibility::Collapsed);
 	}
 	
 	if (HasAuthority())

@@ -26,6 +26,7 @@ public:
 	virtual void OnPossess(APawn* InPawn) override;
 
 	void UpdateElimmedText(ESlateVisibility VisibilityChange);
+	void UpdateHUDWeaponType(ESlateVisibility Visibility, const FString& WeaponTypeString = FString());
 	
 protected:
 	virtual void BeginPlay() override;

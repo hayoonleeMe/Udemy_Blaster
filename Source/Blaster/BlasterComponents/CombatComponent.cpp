@@ -161,11 +161,12 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	{
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
-	// 서버에서 CarriedAmmo 를 HUD 업데이트한다.
+	// 서버에서 CarriedAmmo 를 HUD 업데이트한다. + WeaponType
 	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 	if (Controller)
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+		Controller->UpdateHUDWeaponType(ESlateVisibility::Visible, GetWeaponTypeString(EquippedWeapon->GetWeaponType()));
 	}
 
 	// 무기 착용 소리 재생
@@ -288,6 +289,13 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	if (EquippedWeapon->EquipSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquipSound, Character->GetActorLocation());
+	}
+
+	// HUD 의 WeaponTypeText 업데이트
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->UpdateHUDWeaponType(ESlateVisibility::Visible, GetWeaponTypeString(EquippedWeapon->GetWeaponType()));
 	}
 	
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
