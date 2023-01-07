@@ -23,13 +23,16 @@ public:
 	void SetHUDDefeats(int32 Defeats);
 	void SetHUDWeaponAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 Ammo);
+	void SetHUDMatchCountdown(float CountdownTime);
 	virtual void OnPossess(APawn* InPawn) override;
+	virtual void Tick(float DeltaTime) override;
 
 	void UpdateElimmedText(ESlateVisibility VisibilityChange);
 	void UpdateHUDWeaponType(ESlateVisibility Visibility, const FString& WeaponTypeString = FString());
 	
 protected:
 	virtual void BeginPlay() override;
+	void SetHUDTime();
 
 private:
 	UPROPERTY()
@@ -41,4 +44,7 @@ private:
 	UFUNCTION()
 	virtual void OnRep_ElimmedTextVisibility();
 	void SetHUDElimmedTextVisibility();
+
+	float MatchTime = 120.f;
+	float CountdownInt = 0.f;
 };
