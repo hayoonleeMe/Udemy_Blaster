@@ -40,11 +40,19 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	TSubclassOf<class UUserWidget> CharacterOverlayClass;
 
-	// GameMode 에서 MatchState 가 InProgress 가 될 때 호출하여 화면에 그려지도록 함
-	void AddCharacterOverlay();
-	
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
+
+	// GameMode 에서 MatchState 가 InProgress 가 될 때 호출하여 화면에 그려지도록 함
+	void AddCharacterOverlay();
+
+	UPROPERTY(EditAnywhere, Category = "Announcements")
+	TSubclassOf<UUserWidget> AnnouncementClass;
+
+	UPROPERTY()
+	class UAnnouncement* Announcement;
+
+	void AddAnnouncement();
 
 protected:
 	virtual void BeginPlay() override;

@@ -33,6 +33,7 @@ public:
 	virtual float GetServerTime();				// Synced with server world clock
 	virtual void ReceivedPlayer() override;		// Sync with server clock as soon as possible (Called after this PlayerController's viewport/net connection is associated with this player controller)
 	void OnMatchStateSet(FName State);
+	void HandleMatchHasStarted();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -57,7 +58,7 @@ protected:
 	float TimeSyncFrequency = 5.f;
 
 	float TimeSyncRunningTime = 0.f;
-	void CheckTimeSync(float DeltaTime);
+	void CheckTimeSync(float DeltaTime);	
 	
 private:
 	UPROPERTY()
