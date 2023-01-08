@@ -32,10 +32,12 @@ public:
 
 	virtual float GetServerTime();				// Synced with server world clock
 	virtual void ReceivedPlayer() override;		// Sync with server clock as soon as possible (Called after this PlayerController's viewport/net connection is associated with this player controller)
+	void OnMatchStateSet(FName State);
 	
 protected:
 	virtual void BeginPlay() override;
 	void SetHUDTime();
+	void PollInit();
 
 	/*
 	 * Sync time between client and server
@@ -69,5 +71,20 @@ private:
 	void SetHUDElimmedTextVisibility();
 
 	float MatchTime = 120.f;
-	float CountdownInt = 0.f;
+	uint32 CountdownInt = 0;
+
+	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
+	FName MatchState;
+
+	UFUNCTION()
+	void OnRep_MatchState();
+
+	UPROPERTY()
+	class UCharacterOverlay* CharacterOverlay;
+	bool bInitializeCharacterOverlay = false;	// 추후에 사용할 예정
+
+	float HUDHealth;
+	float HUDMaxHealth;
+	float HUDScore;
+	int32 HUDDefeats;
 };
