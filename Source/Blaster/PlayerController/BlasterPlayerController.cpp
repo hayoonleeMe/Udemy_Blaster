@@ -11,6 +11,7 @@
 #include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/HUD/Announcement.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blaster/GameMode/BlasterGameMode.h"
 
 void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -70,16 +71,18 @@ void ABlasterPlayerController::ServerCheckMatchState_Implementation()
 	{
 		WarmupTime = GameMode->WarmupTime;
 		MatchTime = GameMode->MatchTime;
+		CooldownTime = GameMode->CooldownTime;
 		LevelStartingTime = GameMode->LevelStartingTime;
 		MatchState = GameMode->GetMatchState();
-		ClientJoinMidGame(MatchState, WarmupTime, MatchTime, LevelStartingTime);
+		ClientJoinMidGame(MatchState, WarmupTime, MatchTime, CooldownTime, LevelStartingTime);
 	}
 }
 
-void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMatch, float Warmup, float Match, float StartingTime)
+void ABlasterPlayerController::ClientJoinMidGame_Implementation(FName StateOfMatch, float Warmup, float Match, float Cooldown, float StartingTime)
 {
 	WarmupTime = Warmup;
 	MatchTime = Match;
+	CooldownTime = Cooldown;
 	LevelStartingTime = StartingTime;
 	MatchState = StateOfMatch;
 	OnMatchStateSet(MatchState);
@@ -175,6 +178,13 @@ void ABlasterPlayerController::SetHUDMatchCountdown(float CountdownTime)
 	bool bHUDValid = BlasterHUD && BlasterHUD->CharacterOverlay && BlasterHUD->CharacterOverlay->MatchCountdownText;
 	if (bHUDValid)
 	{
+		// State 가 바뀔 때 TimeLeft(CountdownTime) 가 아직 업데이트되지 않았는데 위젯이 화면에 나타나서 음수의 Invalid 한 값이 화면에 표시되는 현상 방지
+		if (CountdownTime < 0.f)
+		{
+			BlasterHUD->CharacterOverlay->MatchCountdownText->SetText(FText());
+			return;
+		}
+		
 		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
 		int32 Seconds = CountdownTime - Minutes * 60;
 		
@@ -190,6 +200,13 @@ void ABlasterPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
 	bool bHUDValid = BlasterHUD && BlasterHUD->Announcement && BlasterHUD->Announcement->WarmupTime;
 	if (bHUDValid)
 	{
+		// State 가 바뀔 때 TimeLeft(CountdownTime) 가 아직 업데이트되지 않았는데 위젯이 화면에 나타나서 음수의 Invalid 한 값이 화면에 표시되는 현상 방지
+		if (CountdownTime < 0.f)
+		{
+			BlasterHUD->Announcement->WarmupTime->SetText(FText());
+			return;
+		}
+		
 		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
 		int32 Seconds = CountdownTime - Minutes * 60;
 		
@@ -200,24 +217,37 @@ void ABlasterPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
 
 void ABlasterPlayerController::SetHUDTime()
 {
-	// 추가 : 게임을 Packaging 하여 테스트했을 때 생기는 문제 TroubleShooting : Game Mode 의 BeginPlay 보다 PlayerController 의 BeginPlay 가 먼저 호출되어 유효한 값이 아닌 Game Mode 의 LevelStartingTime 을 받아오는 문제가 생겨 타이머의 시간이 
+	// 추가 - 게임을 Packaging 하여 테스트했을 때 생기는 문제 : Game Mode 의 BeginPlay 보다 PlayerController 의 BeginPlay 가 먼저 호출되어 유효한 값이 아닌 Game Mode 의 LevelStartingTime 을 받아오는 문제가 생겨 타이머의 시간이 Invalid 한 값으로 세팅되는 문제가 존재
+	// TroubleShooting : 나중에 LevelStartingTime 이 필요할 떄 다시 GameMode 에서 받아온다.
 	if (HasAuthority())
 	{
-		ABlasterGameMode* GameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
-		if (GameMode)
+		BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
+		if (BlasterGameMode)
 		{
-			LevelStartingTime = GameMode->LevelStartingTime;
+			LevelStartingTime = BlasterGameMode->LevelStartingTime;
 		}
 	}
 	
 	float TimeLeft = 0.f;
 	if (MatchState == MatchState::WaitingToStart) TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
 	else if (MatchState == MatchState::InProgress) TimeLeft = WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
-	
+	else if (MatchState == MatchState::Cooldown) TimeLeft = CooldownTime + WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
 	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
+
+	// 서버는 호스팅을 위해 Lobby Level 에 있다가 게임에 참가하기 때문에 GetWorld()->GetTimeSeconds() 가 약간 더 길게 측정된다.
+	// 따라서 GameMode 로 부터 CountdownTime 을 받아온다.
+	if (HasAuthority())
+	{
+		BlasterGameMode = BlasterGameMode == nullptr ? Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this)) : BlasterGameMode;
+		if (BlasterGameMode)
+		{
+			SecondsLeft = FMath::CeilToInt(BlasterGameMode->GetCountdownTime());
+		}
+	}
+	
 	if (CountdownInt != SecondsLeft)
 	{
-		if (MatchState == MatchState::WaitingToStart)
+		if (MatchState == MatchState::WaitingToStart || MatchState == MatchState::Cooldown)
 		{
 			SetHUDAnnouncementCountdown(TimeLeft);
 		}
@@ -328,9 +358,14 @@ void ABlasterPlayerController::HandleCooldown()
 	{
 		BlasterHUD->CharacterOverlay->RemoveFromParent();
 
-		if (BlasterHUD->Announcement)
+		bool bHUDValid = BlasterHUD->Announcement && BlasterHUD->Announcement->AnnouncementText && BlasterHUD->Announcement->InfoText; 
+		if (bHUDValid)
 		{
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
+			FString AnnouncementText("New Match Starts In:");
+			BlasterHUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
+			// 현재는 쓸모가 없으므로 숨긴다.
+			BlasterHUD->Announcement->InfoText->SetText(FText());
 		}
 	}
 }
