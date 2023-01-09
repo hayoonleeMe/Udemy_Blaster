@@ -9,6 +9,11 @@
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Components/SlateWrapperTypes.h"
 
+namespace MatchState
+{
+	const FName Cooldown = FName("Cooldown");
+}
+
 ABlasterGameMode::ABlasterGameMode()
 {
 	bDelayedStart = true;
@@ -31,10 +36,17 @@ void ABlasterGameMode::Tick(float DeltaTime)
 		// 따라서 BlasterMap 으로 들어왔을 때의 시간인 LevelStartingTime 을 BeginPlay 에서 구한다.
 		// CountdownTime 은 앞으로 남은 시간을 의미하고, LevelStartingTime 을 더해 이미 더 많이 지난 시간을 보충한다.
 		CountdownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
-
 		if (CountdownTime <= 0.f)
 		{
 			StartMatch();
+		}
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		CountdownTime = WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		if (CountdownTime <= 0.f)
+		{
+			SetMatchState(MatchState::Cooldown);
 		}
 	}
 }
