@@ -32,6 +32,10 @@ public:
 	void MulticastElim();
 	virtual void Destroyed() override;
 
+	// 서버에서 이 변수가 변경되면 클라이언트도 변경된 값으로 저장한다.
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -58,6 +62,7 @@ protected:
 
 	// Poll for any relevant classes and initialize our HUD
 	void PollInit();
+	void RotateInPlace(float DeltaTime); 
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -200,4 +205,6 @@ public:
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 	ECombatState GetCombatState() const;
 	void ReloadFinished();
+	FORCEINLINE UCombatComponent* GetCombat() const { return Combat; }
+	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 };

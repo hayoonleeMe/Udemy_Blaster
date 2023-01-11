@@ -11,7 +11,7 @@
 #include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/HUD/Announcement.h"
 #include "Kismet/GameplayStatics.h"
-#include "Blaster/GameMode/BlasterGameMode.h"
+#include "Blaster/BlasterComponents/CombatComponent.h"
 
 void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -367,6 +367,13 @@ void ABlasterPlayerController::HandleCooldown()
 			// 현재는 쓸모가 없으므로 숨긴다.
 			BlasterHUD->Announcement->InfoText->SetText(FText());
 		}
+	}
+
+	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
+	if (BlasterCharacter && BlasterCharacter->GetCombat())
+	{
+		BlasterCharacter->bDisableGameplay = true;
+		BlasterCharacter->GetCombat()->FireButtonPressed(false);
 	}
 }
 
