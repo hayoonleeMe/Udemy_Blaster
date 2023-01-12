@@ -109,10 +109,10 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	GetCharacterMovement()->DisableMovement();			// 캐릭터가 이동하는 것을 제한
 	GetCharacterMovement()->StopMovementImmediately();	// 캐릭터 회전 또한 제한
 	bDisableGameplay = true;							// Input 제한
-	// if (BlasterPlayerController)
-	// {
-	// 	DisableInput(BlasterPlayerController);			
-	// } 제거
+	if (Combat)
+	{
+		Combat->FireButtonPressed(false);
+	}
 
 	// Disable Collision
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);	
@@ -148,7 +148,10 @@ void ABlasterCharacter::Destroyed()
 	{
 		ElimBotComponent->DestroyComponent();
 	}
-	if (Combat && Combat->EquippedWeapon)
+
+	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	bool bMatchNotInProgress = BlasterGameMode && BlasterGameMode->GetMatchState() != MatchState::InProgress;
+	if (Combat && Combat->EquippedWeapon && bMatchNotInProgress)
 	{
 		Combat->EquippedWeapon->Destroy();
 	}
