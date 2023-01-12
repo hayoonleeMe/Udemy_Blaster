@@ -41,4 +41,9 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchCountdownText;
+
+	UPROPERTY(BlueprintReadOnly, Transient, meta = (BindWidgetAnim))
+	class UWidgetAnimation* MatchCountdownBlink;
+
+	void PlayMatchCountdownAnim();
 };

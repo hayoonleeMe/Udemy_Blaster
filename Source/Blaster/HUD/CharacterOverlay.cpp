@@ -3,3 +3,7 @@
 
 #include "CharacterOverlay.h"
 
+void UCharacterOverlay::PlayMatchCountdownAnim()
+{
+	PlayAnimation(MatchCountdownBlink);
+}
