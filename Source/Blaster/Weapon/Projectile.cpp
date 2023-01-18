@@ -9,6 +9,8 @@
 #include "Sound/SoundCue.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/Blaster.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 AProjectile::AProjectile()
 {
@@ -44,15 +46,48 @@ void AProjectile::BeginPlay()
 }
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	FVector NormalImpulse, const FHitResult& Hit)
+                        FVector NormalImpulse, const FHitResult& Hit)
 {
 	Destroy();
+}
+
+void AProjectile::SpawnTrailSystem()
+{
+	if (TrailSystem)
+	{
+		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(TrailSystem, GetRootComponent(), FName(), GetActorLocation(), GetActorRotation(), EAttachLocation::KeepWorldPosition, false);
+	}
+}
+
+void AProjectile::ExplodeDamage()
+{
+	// Instigator : 액터의 피해를 담당하는 APawn, Projectile 을 Weapon 에서 생성할 때 Weapon 의 Owner 를 Projectile 의 Instigator 로 설정하여 생성함
+	APawn* FiringPawn = GetInstigator();
+	if (FiringPawn && HasAuthority())	// 클라이언트에도 Hit Event가 발생하므로 OnHit의 데미지 관련 로직은 서버에서만 수행하도록 설정
+	{
+		AController* FiringController = FiringPawn->GetController();
+		if (FiringController)
+		{
+			// DamageInnerRadius ~ DamageOuterRadius 의 범위 내에 데미지를 가한다.  DamageInnerRadius 로 갈수록 데미지는 MinimumDamage 에서 BaseDamage 에 가까워진다.
+			UGameplayStatics::ApplyRadialDamageWithFalloff(this, Damage, 10.f, GetActorLocation(), DamageInnerRadius, DamageOuterRadius, 1.f, UDamageType::StaticClass(), TArray<AActor*>(), this, FiringController);
+		}
+	}
 }
 
 void AProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AProjectile::StartDestroyTimer()
+{
+	GetWorldTimerManager().SetTimer(DestroyTimer, this, &AProjectile::DestroyTimerFinished, DestroyTime);
+}
+
+void AProjectile::DestroyTimerFinished()
+{
+	Destroy();
 }
 
 void AProjectile::Destroyed()
