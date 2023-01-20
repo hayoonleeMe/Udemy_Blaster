@@ -155,9 +155,10 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
-	if (Character == nullptr || WeaponToEquip == nullptr)
-		return;
+	if (Character == nullptr || WeaponToEquip == nullptr) return;
 
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+	
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->Dropped();
@@ -203,7 +204,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::Reload()
 {
-	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading)
+	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied)
 	{
 		ServerReload();
 	}
@@ -286,6 +287,11 @@ void UCombatComponent::JumpToShotgunEnd()
 	}
 }
 
+void UCombatComponent::ThrowGrenadeFinished()
+{
+	CombatState = ECombatState::ECS_Unoccupied;
+}
+
 void UCombatComponent::OnRep_CombatState()
 {
 	switch (CombatState)
@@ -297,6 +303,14 @@ void UCombatComponent::OnRep_CombatState()
 		if (bFireButtonPressed)
 		{
 			Fire();
+		}
+		break;
+	case ECombatState::ECS_ThrowingGrenade:
+		// ThrowGrenade()를 통해 서버의 Locally Controlled되는 캐릭터와, ServerThrowGrenade()를 통해 서버의 Locally COntrolled되지 않는 캐릭터들의 CombatState가 변경되면
+		// 서버의 각 캐릭터와 대응되는 클라이언트의 캐릭터들의 CombatState도 업데이트되고, Rep Notify인 이 메소드가 호출되면서 Montage도 재생된다. 
+		if (Character && !Character->IsLocallyControlled())
+		{
+			Character->PlayThrowGrenadeMontage();
 		}
 		break;
 	}
@@ -321,6 +335,31 @@ int32 UCombatComponent::AmountToReload()
 	}
 
 	return 0;
+}
+
+void UCombatComponent::ThrowGrenade()
+{
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+	
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	if (Character)
+	{
+		Character->PlayThrowGrenadeMontage();
+	}
+	if (Character && !Character->HasAuthority())
+	{
+		ServerThrowGrenade();
+	}
+}
+
+void UCombatComponent::ServerThrowGrenade_Implementation()
+{
+	// 각 클라이언트의 Locally Controlled되는 캐릭터가 ThrowGrenade()를 호출하면 ServerRPC로 아래의 과정을 수행하여, 서버 입장에서 클라이언트의 Locally Controlled되는 캐릭터인 즉 서버의 Locally Controlled되는 캐릭터를 제외한 나머지 캐릭터들의 CombatState도 변경하고 Montage도 재생한다.
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	if (Character)
+	{
+		Character->PlayThrowGrenadeMontage();
+	}
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
