@@ -123,10 +123,7 @@ void UCombatComponent::FireTimerFinished()
 		Fire();
 	}
 	
-	if (EquippedWeapon->IsEmpty())
-	{
-		Reload();
-	}
+	ReloadEmptyWeapon();
 }
 
 void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
@@ -159,47 +156,100 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 	
+	DropEquippedWeapon();
+
+	EquippedWeapon = WeaponToEquip;
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	
+	AttachActorToRightHand(EquippedWeapon);
+	
+	EquippedWeapon->SetOwner(Character); // Owner에 대한 Rep Notify가 존재하기 때문에 Owner 또한 Replicated된다.
+	EquippedWeapon->SetHUDAmmo();		 // 서버 캐릭터의 HUD 에 Weapon Ammo 를 업데이트한다.
+
+	UpdateCarriedAmmo();
+	UpdateWeaponTypeText();
+	PlayEquipWeaponSound();
+	ReloadEmptyWeapon();
+	
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
+}
+
+void UCombatComponent::DropEquippedWeapon()
+{
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->Dropped();
 	}
+}
 
-	EquippedWeapon = WeaponToEquip;
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+void UCombatComponent::AttachActorToRightHand(AActor* ActorToAttach)
+{
+	if (Character == nullptr || Character->GetMesh() == nullptr || ActorToAttach == nullptr) return;
+	
 	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName(TEXT("RightHandSocket")));
 	if (HandSocket)
 	{
-		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+		HandSocket->AttachActor(ActorToAttach, Character->GetMesh());
 	}
-	EquippedWeapon->SetOwner(Character); // Owner에 대한 Rep Notify가 존재하기 때문에 Owner 또한 Replicated된다.
-	EquippedWeapon->SetHUDAmmo();		 // 서버 캐릭터의 HUD 에 Weapon Ammo 를 업데이트한다.
+}
 
+void UCombatComponent::AttachActorToLeftHand(AActor* ActorToAttach)
+{
+	if (Character == nullptr || Character->GetMesh() == nullptr || ActorToAttach == nullptr || EquippedWeapon == nullptr) return;
+
+	bool bUsePistolSocket = EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Pistol || EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SubmachineGun;
+	FName SocketName = bUsePistolSocket ? FName("PistolSocket") : FName("LeftHandSocket");
+	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(SocketName);
+	if (HandSocket)
+	{
+		HandSocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
+}
+
+void UCombatComponent::UpdateCarriedAmmo()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+	
 	// 무기를 착용하면 캐릭터가 가지고 있는 예비 탄약을 HUD 에 업데이트한다.
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
 	{
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
-	// 서버에서 CarriedAmmo 를 HUD 업데이트한다. + WeaponType
+	// 서버에서 CarriedAmmo 를 HUD 업데이트한다.
 	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
 	if (Controller)
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+}
+
+void UCombatComponent::UpdateWeaponTypeText()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+	
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
 		Controller->UpdateHUDWeaponType(ESlateVisibility::Visible, GetWeaponTypeString(EquippedWeapon->GetWeaponType()));
 	}
+}
 
+void UCombatComponent::PlayEquipWeaponSound()
+{
 	// 무기 착용 소리 재생
-	if (EquippedWeapon->EquipSound)
+	if (Character && EquippedWeapon && EquippedWeapon->EquipSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquipSound, Character->GetActorLocation());
 	}
+}
 
-	if (EquippedWeapon->IsEmpty())
+void UCombatComponent::ReloadEmptyWeapon()
+{
+	if (EquippedWeapon && EquippedWeapon->IsEmpty())
 	{
 		Reload();
 	}
-	
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
 }
 
 void UCombatComponent::Reload()
@@ -290,6 +340,7 @@ void UCombatComponent::JumpToShotgunEnd()
 void UCombatComponent::ThrowGrenadeFinished()
 {
 	CombatState = ECombatState::ECS_Unoccupied;
+	AttachActorToRightHand(EquippedWeapon);
 }
 
 void UCombatComponent::OnRep_CombatState()
@@ -311,6 +362,7 @@ void UCombatComponent::OnRep_CombatState()
 		if (Character && !Character->IsLocallyControlled())
 		{
 			Character->PlayThrowGrenadeMontage();
+			AttachActorToLeftHand(EquippedWeapon);
 		}
 		break;
 	}
@@ -345,6 +397,7 @@ void UCombatComponent::ThrowGrenade()
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
+		AttachActorToLeftHand(EquippedWeapon);
 	}
 	if (Character && !Character->HasAuthority())
 	{
@@ -359,6 +412,7 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
+		AttachActorToLeftHand(EquippedWeapon);
 	}
 }
 
@@ -367,29 +421,22 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	// EquipWeapon() 은 서버에서만 실행되고, EquippedWeapon 은 클라로 Replicated 되고, HandSocket 에 EquippedWeapon 을 붙이는 행위 자체도 클라이언트로 Replicated 된다.
 	// 서버에서는 일련의 과정이 순서대로 수행되지만, Replicated 되어 내려져오는 클라이언트에서는 EquippedWeapon 이 Replicated 되는 것과 Attach 행위 사이의 순서가 일정하다는 보장이 없다.
 	// 또한 EquippedWeapon 에 Physics 가 설정되어 있다면 Attach 가 안되기 때문에 SetWeaponState(EWeaponState::EWS_Equipped) 를 Attach 전에 먼저 호출하여 Physics 와 Collision 을 사용하지 않도록 확실히 할 필요가 있다.
-	// 따라서 순서가 보장되지 않는 Replicated 되는 것을 기다리지 않고 EquippedWeapon 이 서버에서 변경되어 클라에서 호출되는 OnRep_EquippedWeapon() 메소드에서 아래 6줄짜리 코드처럼 서버에서 수행했던 동일한 작업을 수행한다. 
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName(TEXT("RightHandSocket")));
-	if (HandSocket)
+	// 따라서 순서가 보장되지 않는 Replicated 되는 것을 기다리지 않고 EquippedWeapon 이 서버에서 변경되어 클라에서 호출되는 OnRep_EquippedWeapon() 메소드에서 아래 6줄짜리 코드처럼 서버에서 수행했던 동일한 작업을 수행한다.
+	if (Character && EquippedWeapon)
 	{
-		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
-	}
-
-	// 무기 착용 소리 재생
-	if (EquippedWeapon->EquipSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquipSound, Character->GetActorLocation());
-	}
-
-	// HUD 의 WeaponTypeText 업데이트
-	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
-	if (Controller)
-	{
-		Controller->UpdateHUDWeaponType(ESlateVisibility::Visible, GetWeaponTypeString(EquippedWeapon->GetWeaponType()));
-	}
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
+		AttachActorToRightHand(EquippedWeapon);	
+
+		// 무기 착용 소리 재생
+		PlayEquipWeaponSound();
+
+		// HUD 의 WeaponTypeText 업데이트
+		UpdateWeaponTypeText();
+	
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
 }
 
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
