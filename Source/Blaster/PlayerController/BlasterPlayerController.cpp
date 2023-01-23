@@ -40,6 +40,11 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	{
 		SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
 	}
+	if (BlasterCharacter && BlasterCharacter->GetCombat())
+	{
+		// GrenadesText 업데이트
+		SetHUDGrenades(BlasterCharacter->GetCombat()->GetGrenades());
+	}
 
 	// ElimmedText 를 숨긴다.
 	UpdateElimmedText(ESlateVisibility::Collapsed);
@@ -222,6 +227,22 @@ void ABlasterPlayerController::SetHUDAnnouncementCountdown(float CountdownTime)
 	}
 }
 
+void ABlasterPlayerController::SetHUDGrenades(int32 Grenades)
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	bool bHUDValid = BlasterHUD && BlasterHUD->CharacterOverlay && BlasterHUD->CharacterOverlay->GrenadesText;
+	if (bHUDValid)
+	{
+		FString GrenadesText = FString::Printf(TEXT("%d"), Grenades);
+		BlasterHUD->CharacterOverlay->GrenadesText->SetText(FText::FromString(GrenadesText));
+	}
+	else
+	{
+		HUDGrenades = Grenades;
+	}
+}
+
 void ABlasterPlayerController::SetHUDTime()
 {
 	// 추가 - 게임을 Packaging 하여 테스트했을 때 생기는 문제 : Game Mode 의 BeginPlay 보다 PlayerController 의 BeginPlay 가 먼저 호출되어 유효한 값이 아닌 Game Mode 의 LevelStartingTime 을 받아오는 문제가 생겨 타이머의 시간이 Invalid 한 값으로 세팅되는 문제가 존재
@@ -280,6 +301,12 @@ void ABlasterPlayerController::PollInit()
 				SetHUDHealth(HUDHealth, HUDMaxHealth);
 				SetHUDScore(HUDScore);
 				SetHUDDefeats(HUDDefeats);
+
+				ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
+				if (BlasterCharacter && BlasterCharacter->GetCombat())
+				{
+					SetHUDGrenades(BlasterCharacter->GetCombat()->GetGrenades());
+				}
 			}
 		}
 	}

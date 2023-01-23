@@ -46,4 +46,7 @@ public:
 	class UWidgetAnimation* MatchCountdownBlink;
 
 	void PlayMatchCountdownAnim();
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* GrenadesText;
 };

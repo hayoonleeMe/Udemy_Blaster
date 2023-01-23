@@ -34,6 +34,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);		// CarriedAmmo 에 대한 Owner 클라이언트한테만 Replicated 된다.
 	DOREPLIFETIME(UCombatComponent, CombatState);
+	DOREPLIFETIME(UCombatComponent, Grenades);
 }
 
 void UCombatComponent::BeginPlay()
@@ -56,6 +57,8 @@ void UCombatComponent::BeginPlay()
 			InitializeCarriedAmmo();
 		}
 	}
+
+	UpdateHUDGrenades();
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -328,6 +331,11 @@ void UCombatComponent::UpdateShotgunAmmoValues()
 	}
 }
 
+void UCombatComponent::OnRep_Grenades()
+{
+	UpdateHUDGrenades();
+}
+
 void UCombatComponent::JumpToShotgunEnd()
 {
 	// Jump to ShotgunEnd Section	
@@ -421,6 +429,7 @@ int32 UCombatComponent::AmountToReload()
 
 void UCombatComponent::ThrowGrenade()
 {
+	if (Grenades == 0) return;
 	if (CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr) return;
 	
 	CombatState = ECombatState::ECS_ThrowingGrenade;
@@ -434,17 +443,36 @@ void UCombatComponent::ThrowGrenade()
 	{
 		ServerThrowGrenade();
 	}
+	if (Character && Character->HasAuthority())
+	{
+		Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
+		UpdateHUDGrenades();
+	}
 }
 
 void UCombatComponent::ServerThrowGrenade_Implementation()
 {
 	// 각 클라이언트의 Locally Controlled되는 캐릭터가 ThrowGrenade()를 호출하면 ServerRPC로 아래의 과정을 수행하여, 서버 입장에서 클라이언트의 Locally Controlled되는 캐릭터인 즉 서버의 Locally Controlled되는 캐릭터를 제외한 나머지 캐릭터들의 CombatState도 변경하고 Montage도 재생한다.
+	if (Grenades == 0) return;
+	
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	if (Character)
 	{
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
 		ShowAttachedGrenade(true);
+	}
+
+	Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
+	UpdateHUDGrenades();
+}
+
+void UCombatComponent::UpdateHUDGrenades()
+{
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDGrenades(Grenades);
 	}
 }
 
