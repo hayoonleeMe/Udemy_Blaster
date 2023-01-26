@@ -120,6 +120,26 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 	}
 }
 
+void ABlasterPlayerController::SetHUDShield(float Shield, float MaxShield)
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	bool bHUDValid = BlasterHUD && BlasterHUD->CharacterOverlay && BlasterHUD->CharacterOverlay->ShieldBar && BlasterHUD->CharacterOverlay->ShieldText; 
+	if (bHUDValid)
+	{
+		const float ShieldPercent = Shield / MaxShield;
+		BlasterHUD->CharacterOverlay->ShieldBar->SetPercent(ShieldPercent);
+		FString ShieldText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));	// FMath::CeilToInt() : 반올림
+		BlasterHUD->CharacterOverlay->ShieldText->SetText(FText::FromString(ShieldText));
+	}
+	else
+	{
+		bInitializeCharacterOverlay = true;
+		HUDShield = Shield;			// caching
+		HUDMaxShield = MaxShield;	// caching
+	}
+}
+
 void ABlasterPlayerController::SetHUDScore(float Score)
 {
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
@@ -299,6 +319,7 @@ void ABlasterPlayerController::PollInit()
 			{
 				// caching 한 변수들로 HUD 업데이트
 				SetHUDHealth(HUDHealth, HUDMaxHealth);
+				SetHUDShield(HUDShield, HUDMaxShield);
 				SetHUDScore(HUDScore);
 				SetHUDDefeats(HUDDefeats);
 
