@@ -4,6 +4,7 @@
 #include "BuffComponent.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Blaster/BlasterComponents/CombatComponent.h"
 
 UBuffComponent::UBuffComponent()
 {
@@ -77,4 +78,9 @@ void UBuffComponent::MulticastSpeedBuff_Implementation(float BaseSpeed, float Cr
 {
 	Character->GetCharacterMovement()->MaxWalkSpeed = BaseSpeed;
 	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
+
+	if (Character->GetCombat())
+	{
+		Character->GetCombat()->SetBaseWalkSpeed(BaseSpeed);
+	}
 }
