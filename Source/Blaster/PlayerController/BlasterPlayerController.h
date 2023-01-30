@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/SlateWrapperTypes.h"
 #include "GameFramework/PlayerController.h"
+#include "Blaster/Weapon/WeaponTypes.h"
 #include "BlasterPlayerController.generated.h"
 
 /**
@@ -27,11 +28,11 @@ public:
 	void SetHUDMatchCountdown(float CountdownTime);
 	void SetHUDAnnouncementCountdown(float CountdownTime);
 	void SetHUDGrenades(int32 Grenades);
+	void SetHUDWeaponTypeText(const EWeaponType& WeaponType);
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void Tick(float DeltaTime) override;
 
 	void UpdateElimmedText(ESlateVisibility VisibilityChange);
-	void UpdateHUDWeaponType(ESlateVisibility Visibility, const FString& WeaponTypeString = FString());
 
 	virtual float GetServerTime();				// Synced with server world clock
 	virtual void ReceivedPlayer() override;		// Sync with server clock as soon as possible (Called after this PlayerController's viewport/net connection is associated with this player controller)
@@ -111,4 +112,10 @@ private:
 	bool bInitializeDefeats = false;
 	int32 HUDGrenades;
 	bool bInitializeGrenades = false;
+	int32 HUDWeaponAmmo;
+	bool bInitializeWeaponAmmo = false;
+	int32 HUDCarriedAmmo;
+	bool bInitializeCarriedAmmo = false;
+	EWeaponType HUDWeaponType;
+	bool bInitializeWeaponType = false;
 };

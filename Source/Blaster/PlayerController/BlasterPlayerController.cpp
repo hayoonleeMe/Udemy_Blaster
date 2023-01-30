@@ -14,6 +14,7 @@
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/GameState/BlasterGameState.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
+#include "Blaster/Weapon/Weapon.h"
 
 void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -45,12 +46,16 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	{
 		// GrenadesText 업데이트
 		SetHUDGrenades(BlasterCharacter->GetCombat()->GetGrenades());
+
+		// Weapon Type Text 업데이트
+		if (BlasterCharacter->GetCombat()->GetEquippedWeapon())
+		{
+			SetHUDWeaponTypeText(BlasterCharacter->GetCombat()->GetEquippedWeapon()->GetWeaponType());
+		} 
 	}
 
 	// ElimmedText 를 숨긴다.
 	UpdateElimmedText(ESlateVisibility::Collapsed);
-	// WeaponTypeText 를 숨긴다.
-	UpdateHUDWeaponType(ESlateVisibility::Collapsed);
 }
 
 void ABlasterPlayerController::Tick(float DeltaTime)
@@ -185,6 +190,11 @@ void ABlasterPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		BlasterHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
 	}
+	else
+	{
+		bInitializeWeaponAmmo = true;
+		HUDWeaponAmmo = Ammo;
+	}
 }
 
 void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
@@ -196,6 +206,11 @@ void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 	{
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		BlasterHUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+	else
+	{
+		bInitializeCarriedAmmo = true;
+		HUDCarriedAmmo = Ammo;
 	}
 }
 
@@ -265,6 +280,26 @@ void ABlasterPlayerController::SetHUDGrenades(int32 Grenades)
 	}
 }
 
+void ABlasterPlayerController::SetHUDWeaponTypeText(const EWeaponType& WeaponType)
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	bool bHUDValid = BlasterHUD && BlasterHUD->CharacterOverlay && BlasterHUD->CharacterOverlay->WeaponTypeText;
+	if (bHUDValid)
+	{
+		FString WeaponTypeText = GetWeaponTypeString(WeaponType); 
+		if (WeaponTypeText != FString())
+		{
+			BlasterHUD->CharacterOverlay->WeaponTypeText->SetText(FText::FromString(WeaponTypeText));
+		}
+	}
+	else
+	{
+		bInitializeWeaponType = true;
+		HUDWeaponType = WeaponType;
+	}
+}
+
 void ABlasterPlayerController::SetHUDTime()
 {
 	// 추가 - 게임을 Packaging 하여 테스트했을 때 생기는 문제 : Game Mode 의 BeginPlay 보다 PlayerController 의 BeginPlay 가 먼저 호출되어 유효한 값이 아닌 Game Mode 의 LevelStartingTime 을 받아오는 문제가 생겨 타이머의 시간이 Invalid 한 값으로 세팅되는 문제가 존재
@@ -324,6 +359,9 @@ void ABlasterPlayerController::PollInit()
 				if (bInitializeShield) SetHUDShield(HUDShield, HUDMaxShield);
 				if (bInitializeScore) SetHUDScore(HUDScore);
 				if (bInitializeDefeats) SetHUDDefeats(HUDDefeats);
+				if (bInitializeCarriedAmmo) SetHUDCarriedAmmo(HUDCarriedAmmo);
+				if (bInitializeWeaponAmmo) SetHUDWeaponAmmo(HUDWeaponAmmo);
+				if (bInitializeWeaponType) SetHUDWeaponTypeText(HUDWeaponType);
 
 				ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
 				if (BlasterCharacter && BlasterCharacter->GetCombat())
@@ -462,21 +500,6 @@ void ABlasterPlayerController::HandleCooldown()
 	{
 		BlasterCharacter->bDisableGameplay = true;
 		BlasterCharacter->GetCombat()->FireButtonPressed(false);
-	}
-}
-
-void ABlasterPlayerController::UpdateHUDWeaponType(ESlateVisibility Visibility, const FString& WeaponTypeString)
-{
-	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
-
-	bool bHUDValid = BlasterHUD && BlasterHUD->CharacterOverlay && BlasterHUD->CharacterOverlay->WeaponTypeText;
-	if (bHUDValid)
-	{
-		BlasterHUD->CharacterOverlay->WeaponTypeText->SetVisibility(Visibility);
-		if (WeaponTypeString != FString())
-		{
-			BlasterHUD->CharacterOverlay->WeaponTypeText->SetText(FText::FromString(WeaponTypeString));
-		}
 	}
 }
 

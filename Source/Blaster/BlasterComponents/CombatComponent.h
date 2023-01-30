@@ -82,8 +82,7 @@ protected:
 	void DropEquippedWeapon();
 	void AttachActorToRightHand(AActor* ActorToAttach);
 	void AttachActorToLeftHand(AActor* ActorToAttach);
-	void UpdateCarriedAmmo();
-	void UpdateWeaponTypeText();	
+	void UpdateCarriedAmmo();	
 	void PlayEquipWeaponSound();
 	void ReloadEmptyWeapon();
 
@@ -208,8 +207,10 @@ private:
 	int32 MaxGrenades = 4;
 
 	void UpdateHUDGrenades();
+	void UpdateHUDWeaponTypeText();
 
 public:
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 	FORCEINLINE void SetBaseWalkSpeed(float BaseSpeed) { BaseWalkSpeed = BaseSpeed; }
+	FORCEINLINE AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 };
