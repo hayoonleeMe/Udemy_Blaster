@@ -48,9 +48,9 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 		SetHUDGrenades(BlasterCharacter->GetCombat()->GetGrenades());
 
 		// Weapon Type Text 업데이트
-		if (BlasterCharacter->GetCombat()->GetEquippedWeapon())
+		if (BlasterCharacter->GetEquippedWeapon())
 		{
-			SetHUDWeaponTypeText(BlasterCharacter->GetCombat()->GetEquippedWeapon()->GetWeaponType());
+			SetHUDWeaponTypeText(BlasterCharacter->GetEquippedWeapon()->GetWeaponType());
 		} 
 	}
 

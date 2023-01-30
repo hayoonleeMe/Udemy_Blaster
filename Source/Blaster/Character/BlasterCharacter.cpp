@@ -452,6 +452,7 @@ void ABlasterCharacter::EquipButtonPressed()
 	
 	if (Combat)
 	{
+		/* 제거
 		if (HasAuthority())
 		{
 			Combat->EquipWeapon(OverlappingWeapon);
@@ -459,7 +460,8 @@ void ABlasterCharacter::EquipButtonPressed()
 		else
 		{
 			ServerEquipButtonPressed();			
-		}
+		}*/
+		ServerEquipButtonPressed();
 	}
 }
 
