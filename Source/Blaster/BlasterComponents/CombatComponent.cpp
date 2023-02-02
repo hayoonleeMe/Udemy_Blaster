@@ -114,8 +114,9 @@ void UCombatComponent::Fire()
 	if (CanFire())
 	{
 		bCanFire = false;
-		
 		ServerFire(HitTarget);
+		LocalFire(HitTarget);
+		
 		// 총을 발사하면 크로스헤어 Spread
 		if (EquippedWeapon)
 		{
@@ -151,6 +152,15 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 }
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	// 클라이언트의 Locally Controlled되는 캐릭터들이 LocalFire()를 중복해서 호출하는 것을 방지
+	if (Character && Character->IsLocallyControlled() && !Character->HasAuthority()) return;
+
+	// 서버의 캐릭터 or 클라이언트의 Locally Controlled되지 않는 캐릭터들
+	LocalFire(TraceHitTarget);
+}
+
+void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 {
 	if (EquippedWeapon == nullptr) return;
 
@@ -190,6 +200,8 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::SwapWeapons()
 {
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
+	
 	AWeapon* TempWeapon = EquippedWeapon;
 	EquippedWeapon = SecondaryWeapon;
 	SecondaryWeapon = TempWeapon;
