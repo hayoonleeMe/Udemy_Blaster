@@ -55,4 +55,10 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* GrenadesText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* HighPingImage;
+
+	UPROPERTY(meta = (BindWidgetAnim), Transient)	// Transient : 디스크에 올리지 않아서 런타임으로 설정 가능
+	UWidgetAnimation* HighPingAnimation;
 };
