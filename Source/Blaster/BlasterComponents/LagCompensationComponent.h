@@ -54,4 +54,10 @@ private:
 
 	UPROPERTY()
 	class ABlasterPlayerController* Controller;
+
+	// not for blueprint, so no use UPROPERTY()
+	TDoubleLinkedList<FFramePackage> FrameHistory;
+
+	UPROPERTY(EditAnywhere)
+	float MaxRecordTime = 4.f;
 };
