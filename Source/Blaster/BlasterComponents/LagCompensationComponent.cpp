@@ -2,6 +2,9 @@
 
 
 #include "LagCompensationComponent.h"
+#include "Blaster/Character/BlasterCharacter.h"
+#include "Components/BoxComponent.h"
+#include "DrawDebugHelpers.h"
 
 ULagCompensationComponent::ULagCompensationComponent()
 {
@@ -11,6 +14,35 @@ ULagCompensationComponent::ULagCompensationComponent()
 void ULagCompensationComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	FFramePackage Package;
+	SaveFramePackage(Package);
+	ShowFramePackage(Package, FColor::Orange);
+}
+
+void ULagCompensationComponent::SaveFramePackage(FFramePackage& Package)
+{
+	Character = Character == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : Character;
+	if (Character)
+	{
+		Package.Time = GetWorld()->GetTimeSeconds();	// FramePackage는 서버에서만 사용되고, 서버의 시간은 항상 올바른 시간이다. 
+		for (auto& BoxPair : Character->HitCollisionBoxes)
+		{
+			FBoxInformation BoxInformation;
+			BoxInformation.Location = BoxPair.Value->GetComponentLocation();
+			BoxInformation.Rotation = BoxPair.Value->GetComponentRotation();
+			BoxInformation.BoxExtent = BoxPair.Value->GetScaledBoxExtent();
+			Package.HitBoxInfo.Add(BoxPair.Key, BoxInformation);
+		}
+	}
+}
+
+void ULagCompensationComponent::ShowFramePackage(const FFramePackage& Package, const FColor& Color)
+{
+	for (auto& BoxInfo : Package.HitBoxInfo)
+	{
+		DrawDebugBox(GetWorld(), BoxInfo.Value.Location, BoxInfo.Value.BoxExtent, FQuat(BoxInfo.Value.Rotation), Color, true);
+	}
 }
 
 void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

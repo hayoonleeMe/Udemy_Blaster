@@ -46,6 +46,9 @@ public:
 
 	void SpawnDefaultWeapon();
 
+	UPROPERTY()
+	TMap<FName, class UBoxComponent*> HitCollisionBoxes; 
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -79,8 +82,9 @@ protected:
 	/*
 	 *	Hit boxes used for server-side rewind
 	 */
+	// Skeleton의 본 이름과 일치시킨다.
 	UPROPERTY(EditAnywhere)
-	class UBoxComponent* head;	// Skeleton의 본 이름과 일치시킨다.
+	UBoxComponent* head;	
 
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* pelvis;
