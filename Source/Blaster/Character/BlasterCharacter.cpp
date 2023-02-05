@@ -872,3 +872,9 @@ void ABlasterCharacter::ReloadFinished()
 		Combat->FinishReloading();
 	}
 }
+
+bool ABlasterCharacter::IsLocallyReloading()
+{
+	if (Combat == nullptr) return false;
+	return Combat->bLocallyReloading;
+}
