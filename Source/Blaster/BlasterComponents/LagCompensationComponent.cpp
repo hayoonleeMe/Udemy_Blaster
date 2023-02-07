@@ -41,6 +41,60 @@ void ULagCompensationComponent::ShowFramePackage(const FFramePackage& Package, c
 	}
 }
 
+void ULagCompensationComponent::ServerSideRewind(ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart,
+	const FVector_NetQuantize& HitLocation, float HitTime)
+{
+	bool bReturn = HitCharacter == nullptr || HitCharacter->GetLagCompensation() == nullptr || HitCharacter->GetLagCompensation()->FrameHistory.GetHead() == nullptr || HitCharacter->GetLagCompensation()->FrameHistory.GetTail() == nullptr;
+	if (bReturn) return;
+
+	// Frame Package that we check to verify a hit
+	FFramePackage FrameToCheck;
+
+	// Frame History of the HitCharacter
+	const TDoubleLinkedList<FFramePackage>& History = HitCharacter->GetLagCompensation()->FrameHistory;
+	const float OldestHistoryTime = History.GetTail()->GetValue().Time;
+	const float NewestHistoryTime = History.GetHead()->GetValue().Time;
+
+	// HitTime이 History의 범위 안에 있을 때
+	if (OldestHistoryTime < HitTime && HitTime < NewestHistoryTime)
+	{
+		TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Younger = History.GetHead();
+		TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Older = Younger;
+		while (Older->GetValue().Time > HitTime)
+		{
+			// March back until: OlderTime < HitTime < YoungerTime
+			if (Older->GetNextNode() == nullptr) break;
+			Older = Older->GetNextNode();
+			if (Older->GetValue().Time > HitTime)
+			{
+				Younger = Older;
+			}
+		}
+
+		if (Older->GetValue().Time == HitTime)	// highly unlikely, but we found our frame to check
+		{
+			FrameToCheck = Older->GetValue();
+		}
+		else
+		{
+			// Interpolate between Younger and Older
+		}
+	}
+	else
+	{
+		// too far back - too laggy to do SSR
+		if (OldestHistoryTime > HitTime) return;
+		if (OldestHistoryTime == HitTime)
+		{
+			FrameToCheck = History.GetTail()->GetValue();
+		}
+		if (NewestHistoryTime <= HitTime)
+		{
+			FrameToCheck = History.GetHead()->GetValue();
+		}
+	}
+}
+
 void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
