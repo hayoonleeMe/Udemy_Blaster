@@ -339,6 +339,7 @@ FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitC
 		}
 	}
 
+	FrameToCheck.Character = HitCharacter;
 	return FrameToCheck;
 }
 
