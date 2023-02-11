@@ -74,6 +74,7 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
+	DOREPLIFETIME_CONDITION(AWeapon, bUseServerSideRewind, COND_OwnerOnly);
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -196,6 +197,11 @@ void AWeapon::OnWeaponStateSet()
 	}
 }
 
+void AWeapon::OnPingTooHigh(bool bPingTooHigh)
+{
+	bUseServerSideRewind = !bPingTooHigh;
+}
+
 void AWeapon::OnRep_WeaponState()
 {
 	OnWeaponStateSet();
@@ -217,6 +223,16 @@ void AWeapon::OnEquipped()
 	}
 
 	EnableCustomDepth(false);
+
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter && bUseServerSideRewind)	// 이 무기가 SSR을 사용하는 무기일 경우메만 Bind한다.
+	{
+		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+		if (BlasterOwnerController && HasAuthority() && !BlasterOwnerController->HighPingDelegate.IsBound())	// IsBound() : Bind된 콜백 함수가 있는지 반환한다.
+		{
+			BlasterOwnerController->HighPingDelegate.AddDynamic(this, &AWeapon::OnPingTooHigh);
+		}
+	}
 }
 
 void AWeapon::OnDropped()
@@ -235,6 +251,17 @@ void AWeapon::OnDropped()
 	EnableCustomDepth(true);
 	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
 	WeaponMesh->MarkRenderStateDirty();
+
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter)	
+	{
+		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+		if (BlasterOwnerController && HasAuthority() && BlasterOwnerController->HighPingDelegate.IsBound())	// Bind된 콜백함수가 있을 때에만 제거한다.
+		{
+			BlasterOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);
+			bUseServerSideRewind = true;
+		}
+	}
 }
 
 void AWeapon::OnEquippedSecondary()
@@ -257,6 +284,17 @@ void AWeapon::OnEquippedSecondary()
 	{
 		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
 		WeaponMesh->MarkRenderStateDirty();	
+	}
+
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (BlasterOwnerCharacter)	
+	{
+		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->Controller) : BlasterOwnerController;
+		if (BlasterOwnerController && HasAuthority() && BlasterOwnerController->HighPingDelegate.IsBound())	// Bind된 콜백함수가 있을 때에만 제거한다.
+		{
+			BlasterOwnerController->HighPingDelegate.RemoveDynamic(this, &AWeapon::OnPingTooHigh);
+			bUseServerSideRewind = true;
+		}
 	}
 }
 
