@@ -279,7 +279,7 @@ void AWeapon::OnEquippedSecondary()
 		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	}
 
-	EnableCustomDepth(true);
+	//제거EnableCustomDepth(true);
 	if (WeaponMesh)
 	{
 		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_TAN);
