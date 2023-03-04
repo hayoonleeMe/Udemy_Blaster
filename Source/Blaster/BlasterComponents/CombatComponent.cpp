@@ -888,7 +888,12 @@ bool UCombatComponent::CanFire()
 	if (EquippedWeapon == nullptr) return false;
 
 	// 샷건은 장전 중에 발사가 가능하다.
-	if (!EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) return true;
+	if (!EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+	{
+		// 장전 중에 발사했을 때 장전 중임을 나타내는 변수인 bLocallyReloading을 false로 만들어 이후에도 발사와 장전이 가능하도록 한다. 
+		bLocallyReloading = false;
+		return true;
+	}
 
 	if (bLocallyReloading) return false;
 	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
