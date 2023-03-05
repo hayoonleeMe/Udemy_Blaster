@@ -50,6 +50,7 @@ protected:
 	virtual void BeginPlay() override;
 	void SetHUDTime();
 	void PollInit();
+	virtual void SetupInputComponent() override;
 
 	/*
 	 * Sync time between client and server
@@ -80,6 +81,8 @@ protected:
 	void HighPingWarning();
 	void StopHighPingWarning();
 	void CheckPing(float DeltaTime);
+
+	void ShowReturnToMainMenu();
 	
 private:
 	UPROPERTY()
@@ -94,6 +97,18 @@ private:
 	UFUNCTION()
 	virtual void OnRep_ElimmedTextVisibility();
 	void SetHUDElimmedTextVisibility();
+
+	/*
+	 * Return to Main Menu
+	 */
+
+	UPROPERTY(EditAnywhere, Category = HUD)
+	TSubclassOf<class UUserWidget> ReturnToMainMenuWidget;
+
+	UPROPERTY()
+	class UReturnToMainMenu* ReturnToMainMenu;
+
+	bool bReturnToMainMenuOpen = false;
 
 	float LevelStartingTime = 0.f;
 	float MatchTime = 0.f;			// Game Mode 에서 얻어오도록 변경
