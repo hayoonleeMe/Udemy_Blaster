@@ -6,6 +6,7 @@
 #include "Components/Button.h"
 #include "MultiplayerSessionsSubSystem.h"
 #include "GameFramework/GameModeBase.h"
+#include "Blaster/Character/BlasterCharacter.h"
 
 void UReturnToMainMenu::MenuSetup()
 {
@@ -112,6 +113,29 @@ void UReturnToMainMenu::ReturnButtonClicked()
 {
 	ReturnButton->SetIsEnabled(false);
 	
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		APlayerController* FirstPlayerController = World->GetFirstPlayerController();
+		if (FirstPlayerController)
+		{
+			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FirstPlayerController->GetPawn());
+			if (BlasterCharacter)
+			{
+				BlasterCharacter->ServerLeaveGame();
+				BlasterCharacter->OnLeftGame.AddDynamic(this, &UReturnToMainMenu::OnPlayerLeftGame);
+			}
+			else
+			{
+				// 플레이어가 Leave Game을 다시 시도할 수 있도록 버튼을 활성화한다.
+				ReturnButton->SetIsEnabled(true);
+			}
+		}
+	}
+}
+
+void UReturnToMainMenu::OnPlayerLeftGame()
+{
 	if (MultiplayerSessionsSubsystem)
 	{
 		MultiplayerSessionsSubsystem->DestroySession();
