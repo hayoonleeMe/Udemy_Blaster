@@ -64,6 +64,12 @@ public:
 	
 	FOnLeftGame OnLeftGame;
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastGainedTheLead();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastLostTheLead();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -240,7 +246,7 @@ private:
 	void OnRep_Health(float LastHealth);
 
 	/*
-	 * Plaeyr Shield
+	 * Player Shield
 	 */
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
@@ -292,7 +298,7 @@ private:
 	UMaterialInstance* DissolveMaterialInstance;
 
 	/*
-	 * Elim Bot
+	 * Elim Effects
 	 */
 
 	UPROPERTY(EditAnywhere)
@@ -306,6 +312,12 @@ private:
 
 	UPROPERTY()
 	class ABlasterPlayerState* BlasterPlayerState;
+
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* CrownSystem;
+
+	UPROPERTY()
+	class UNiagaraComponent* CrownComponent;
 
 	/*
 	 * Grenade
