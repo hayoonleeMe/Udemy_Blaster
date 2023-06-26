@@ -119,7 +119,7 @@ void ABlasterPlayerController::SetHUDBlueTeamScore(int32 BlueScore)
 	if (bHUDValid)
 	{
 		FString ScoreText = FString::FromInt(BlueScore);
-		BlasterHUD->CharacterOverlay->RedTeamScore->SetText(FText::FromString(ScoreText));
+		BlasterHUD->CharacterOverlay->BlueTeamScore->SetText(FText::FromString(ScoreText));
 	}
 }
 
