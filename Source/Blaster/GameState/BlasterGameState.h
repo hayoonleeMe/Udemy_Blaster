@@ -24,6 +24,10 @@ public:
 	/*
 	 * Teams
 	 */
+
+	void RedTeamScores();
+	void BlueTeamScores();
+	
 	TArray<ABlasterPlayerState*> RedTeam;
 	TArray<ABlasterPlayerState*> BlueTeam;
 
@@ -40,5 +44,5 @@ public:
 	void OnRep_BlueTeamScore();
 
 private:
-	float  TopScore = 0.f;
+	float TopScore = 0.f;
 };

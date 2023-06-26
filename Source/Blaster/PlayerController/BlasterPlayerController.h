@@ -33,13 +33,17 @@ public:
 	void SetHUDWeaponTypeText(const EWeaponType& WeaponType);
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void Tick(float DeltaTime) override;
+	void HideTeamScores();
+	void InitTeamScores();
+	void SetHUDRedTeamScore(int32 RedScore);
+	void SetHUDBlueTeamScore(int32 BlueScore);
 
 	void UpdateElimmedText(ESlateVisibility VisibilityChange);
 
 	virtual float GetServerTime();				// Synced with server world clock
 	virtual void ReceivedPlayer() override;		// Sync with server clock as soon as possible (Called after this PlayerController's viewport/net connection is associated with this player controller)
-	void OnMatchStateSet(FName State);
-	void HandleMatchHasStarted();
+	void OnMatchStateSet(FName State, bool bTeamsMatch = false);
+	void HandleMatchHasStarted(bool bTeamsMatch = false);
 	void HandleCooldown();
 
 	float SingleTripTime = 0.f;
@@ -88,6 +92,12 @@ protected:
 
 	UFUNCTION(Client, Reliable)
 	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
+
+	UPROPERTY(ReplicatedUsing = OnRep_ShowTeamScores)
+	bool bShowTeamScores = false;
+
+	UFUNCTION()
+	void OnRep_ShowTeamScores();
 	
 private:
 	UPROPERTY()
