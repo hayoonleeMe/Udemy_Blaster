@@ -245,6 +245,8 @@ private:
 	void UpdateHUDGrenades();
 	void UpdateHUDWeaponTypeText();
 
+	bool bHoldingTheFlag = false;
+
 public:
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 	FORCEINLINE void SetBaseWalkSpeed(float BaseSpeed) { BaseWalkSpeed = BaseSpeed; }
