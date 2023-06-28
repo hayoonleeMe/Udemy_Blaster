@@ -393,6 +393,14 @@ void ABlasterCharacter::Tick(float DeltaTime)
 
 void ABlasterCharacter::RotateInPlace(float DeltaTime)
 {
+	if (Combat && Combat->bHoldingTheFlag)
+	{
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
+	
 	if (bDisableGameplay)
 	{
 		// Cooldown State 가 되어 움직임이 제한되면 AimOffset() 메소드에서 설정한 값들을 기본값으로 되돌린다.
