@@ -436,6 +436,13 @@ void ABlasterCharacter::RotateInPlace(float DeltaTime)
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 		return;
 	}
+
+	// 무기를 착용 중이고 HoldingTheFlag 중이 아닐 때의 움직임 설정
+	if (Combat && Combat->EquippedWeapon)
+	{
+		bUseControllerRotationYaw = true;
+		GetCharacterMovement()->bOrientRotationToMovement = false;	
+	}
 	
 	if (bDisableGameplay)
 	{
@@ -1145,4 +1152,10 @@ ETeam ABlasterCharacter::GetTeam()
 	if (BlasterPlayerState == nullptr) return ETeam::ET_NoTeam;
 
 	return BlasterPlayerState->GetTeam();
+}
+
+void ABlasterCharacter::SetHoldingTheFlag(bool bHolding)
+{
+	if (Combat == nullptr) return;
+	Combat->bHoldingTheFlag = bHolding;
 }
